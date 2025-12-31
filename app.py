@@ -1,39 +1,97 @@
 import streamlit as st
-import numpy as np
+import pandas as pd
 import pickle
 
-# Load model and scaler
+# ===============================
+# Load Model Artifacts
+# ===============================
 model = pickle.load(open("productivity_model.pkl", "rb"))
 scaler = pickle.load(open("scaler.pkl", "rb"))
+features = pickle.load(open("features.pkl", "rb"))
 
-st.set_page_config(page_title="Employee Productivity Predictor", layout="centered")
+# ===============================
+# Page Config
+# ===============================
+st.set_page_config(
+    page_title="Employee Productivity Predictor",
+    page_icon="📊",
+    layout="centered"
+)
 
-st.title("👩‍💼 Employee Productivity Prediction App")
-st.markdown("Predict employee productivity using Machine Learning")
+# ===============================
+# Custom Styling
+# ===============================
+st.markdown("""
+<style>
+.main {
+    background-color: #f5f7fb;
+}
+.card {
+    background-color: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+}
+.title {
+    text-align: center;
+    font-size: 36px;
+    font-weight: bold;
+}
+.subtitle {
+    text-align: center;
+    color: gray;
+}
+</style>
+""", unsafe_allow_html=True)
 
-st.divider()
+# ===============================
+# Header
+# ===============================
+st.markdown('<div class="title">👩‍💼 Employee Productivity Predictor</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Machine Learning Based Classification App</div>', unsafe_allow_html=True)
+st.write("")
 
-# Input fields
-age = st.number_input("Employee Age", 18, 65)
-hours = st.slider("Working Hours per Day", 1, 12)
-experience = st.number_input("Years of Experience", 0, 40)
-salary = st.number_input("Monthly Salary", 10000, 300000)
-team_size = st.slider("Team Size", 1, 50)
+# ===============================
+# Input Card
+# ===============================
+st.markdown('<div class="card">', unsafe_allow_html=True)
+st.subheader("📝 Enter Employee Details")
 
-# Create input array
-input_data = np.array([[age, hours, experience, salary, team_size]])
-input_scaled = scaler.transform(input_data)
+user_input = {}
 
+for feature in features:
+    user_input[feature] = st.number_input(
+        label=feature.replace("_", " "),
+        min_value=0.0,
+        value=0.0,
+        step=1.0
+    )
+
+st.markdown('</div>', unsafe_allow_html=True)
+st.write("")
+
+# ===============================
 # Prediction
-if st.button("Predict Productivity 🚀"):
-    prediction = model.predict(input_scaled)
+# ===============================
+if st.button("🚀 Predict Productivity"):
+    input_df = pd.DataFrame([user_input])
+    input_scaled = scaler.transform(input_df)
+    prediction = model.predict(input_scaled)[0]
 
-    if prediction[0] == 0:
-        st.success("🟥 Productivity Level: LOW")
-    elif prediction[0] == 1:
-        st.info("🟨 Productivity Level: MEDIUM")
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("📌 Prediction Result")
+
+    if prediction == 0:
+        st.error("🔴 Productivity Level: LOW")
+    elif prediction == 1:
+        st.warning("🟡 Productivity Level: MEDIUM")
     else:
-        st.success("🟩 Productivity Level: HIGH")
+        st.success("🟢 Productivity Level: HIGH")
 
-st.divider()
-st.caption("ML Model: Logistic Regression | Dataset: Kaggle Employee Productivity")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ===============================
+# Footer
+# ===============================
+st.markdown("---")
+st.caption("📊 Model: Logistic Regression | Dataset: Kaggle Employee Productivity")
